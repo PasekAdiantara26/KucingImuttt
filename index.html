@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Girlfriend Day Kesayangan!</title>
+    <!-- Library untuk efek Confetti saat menang -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffe6e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Tombol Mute/Unmute Musik Melayang */
+        .music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: 2px solid #ff4d4d;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 100;
+            transition: transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .music-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Badge Girlfriend Day Spesial */
+        .gf-badge {
+            background-color: #ff4d4d;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        /* Animasi Hati Melayang di Background */
+        .bg-heart {
+            position: absolute;
+            color: rgba(255, 77, 77, 0.2);
+            font-size: 24px;
+            animation: float 6s infinite linear;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 85%;
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Transisi Smooth Slide & Scale saat ganti pertanyaan */
+        .fade-in {
+            animation: slideIn 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        @keyframes slideIn {
+            0% { 
+                opacity: 0; 
+                transform: translateY(15px) scale(0.96); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        h1 {
+            color: #ff4d4d;
+            font-size: 24px;
+            margin-bottom: 10px;
+            margin-top: 5px;
+        }
+
+        .progress {
+            font-size: 14px;
+            color: #888;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(255, 77, 77, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #e60000;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        /* --- EFEK JAWABAN BENAR & SALAH --- */
+        .btn-correct {
+            background-color: #28a745 !important;
+            color: white !important;
+            animation: popSuccess 0.4s ease-in-out;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+        }
+
+        .btn-wrong {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: shake 0.4s ease-in-out;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        @keyframes popSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-wa {
+            background-color: #25D366;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            padding: 12px 20px;
+            margin-top: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(37, 211, 102, 0.3);
+            transition: 0.3s;
+        }
+
+        .btn-wa:hover {
+            background-color: #1da851;
+            transform: scale(1.03);
+        }
+
+        #quiz-section, #result-section, #fail-section {
+            display: none;
+        }
+
+        .heart-icon {
+            font-size: 45px;
+            animation: beat .4s infinite alternate;
+            display: inline-block;
+        }
+
+        @keyframes beat {
+            to { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tombol Kontrol Musik -->
+    <button id="music-btn" class="music-btn" onclick="toggleMusic()">🎵</button>
+
+    <!-- Tag Audio untuk Lagu Background -->
+    <audio id="bg-music" loop>
+        <source src="babymeow-relax-with-my-cat-304131.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Background Hati Melayang -->
+    <div class="bg-heart" style="left: 10%; animation-duration: 7s;">❤️</div>
+    <div class="bg-heart" style="left: 30%; animation-duration: 5s;">💖</div>
+    <div class="bg-heart" style="left: 60%; animation-duration: 8s;">💕</div>
+    <div class="bg-heart" style="left: 80%; animation-duration: 6s;">❤️</div>
+
+    <div class="container" id="main-container">
+        <!-- Tampilan Awal -->
+        <div id="start-section">
+            <div class="heart-icon">💖</div>
+            <div><span class="gf-badge">Happy Girlfriend Day! 🎉</span></div>
+            <h1>Haiii Kucing Imuttt!</h1>
+            <p>Selamat Hari Pacar wahahaaaaha! 🌸 Karena hari ini spesial, aku udah bikin mini game kuis buat kamu. Kalau kamu bisa jawab semuanya dengan benar, nanti ada kejutannyaa!</p>
+            <button class="btn" onclick="startQuiz()">Mulai Main 🚀</button>
+        </div>
+
+        <!-- Tampilan Kuis -->
+        <div id="quiz-section">
+            <div id="progress" class="progress">Pertanyaan 1 dari 5</div>
+            <h2 id="question" style="font-size: 18px; color: #333;">Pertanyaan muncul di sini</h2>
+            <div id="answer-buttons"></div>
+        </div>
+
+        <!-- Tampilan Gagal (Jika Ada Jawaban Yang Salah) -->
+        <div id="fail-section">
+            <div class="heart-icon">🙈</div>
+            <div><span class="gf-badge">Waduh, Belum Pass! 😜</span></div>
+            <h1>Tetottt! Ada yang Salah!</h1>
+            <p>Ada jawaban kamu yang masih kurang tepat sayang. Hadiahnya belum bisa keluarrr! Coba ulang lagi kuisnya dan jawab yang benar yaa, harus bener semuaa wkwkwk! 😜❤️</p>
+            <button class="btn" onclick="restartQuiz()">Coba Lagi 🔄</button>
+        </div>
+
+        <!-- Tampilan Akhir / Berhasil (Ucapan Girlfriend Day) -->
+        <div id="result-section">
+            <div class="heart-icon">💖</div>
+            <span class="gf-badge">Happy Girlfriend Day 💐</span>
+            <h1>Yeyy! Kamu Berhasil!</h1>
+            <p>Happy Girlfriend Day yaa sayangankuu! Makasii yaa udah hadir di hidup aku, udah jadi pacar yang hebat, baikk, dan selalu sayang sama akuu... walaupun <i>sai ngambul</i> wkwkwk. I'm so lucky to have you! 🥰✨</p>
+            
+            <p style="background: #fff5f5; padding: 12px; border-radius: 10px; border-left: 4px solid #ff4d4d; font-size: 14px;">
+                <strong>Hadiah Girlfriend Day Kamu:</strong><br>
+                Nanti kalo aku udah lese di kampus, kita jalan-jalan dan mamm di tempat favorit kamu, aku yang traktir semuanyaaa! 🍕🍦❤️
+            </p>
+
+            <a id="wa-link" href="#" target="_blank" class="btn-wa">Klaim Hadiah di WhatsApp 💬</a>
+        </div>
+    </div>
+
+    <script>
+        const nomorWA = "6282145043906"; 
+
+        const bgMusic = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        let isMusicPlaying = false;
+
+        // Array untuk menyimpan jawaban pacar (true/false)
+        let userAnswers = [];
+
+        const questions = [
+            {
+                question: "Tanggal berapa kita jadian?",
+                answers: [
+                    { text: "30 Januari", correct: false },
+                    { text: "03 Februari", correct: true },
+                    { text: "14 Februari", correct: false },
+                    { text: "01 Maret", correct: false },
+                    { text: "03 Maret", correct: false },
+                    { text: "14 Maret", correct: false }
+                ]
+            },
+            {
+                question: "Apa makanan yang paling aku suka pas kita mamm bareng?",
+                answers: [
+                    { text: "Nasi Goreng", correct: false },
+                    { text: "Ice Cream", correct: false },
+                    { text: "Star Pizza", correct: true },
+                    { text: "Kebab", correct: false },
+                    { text: "Burger", correct: false },
+                    { text: "Bakso Tampaksiring", correct: false }
+                ]
+            },
+            {
+                question: "Siapa yang paling sering ngambekkk?",
+                answers: [
+                    { text: "Kamu", correct: false },
+                    { text: "Aku", correct: true },
+                    { text: "Dua-duanya", correct: false }
+                ]
+            },
+            {
+                question: "Siapa yang kalau ditanya 'mau mamm di mana?' jawabannya selalu 'terserah'?",
+                answers: [
+                    { text: "Kamu", correct: false },
+                    { text: "Aku", correct: true },
+                    { text: "Mbok-mbok/Bli-bli kasir", correct: false }
+                ]    
+            },
+            {
+                question: "Pertanyaan terakhir: Kamu sayang nggak sama aku? 🥺",
+                answers: [
+                    { text: "Sayang Bangetttt!! ❤️", correct: true },
+                    { text: "Nggak 🤪", correct: false, isSneaky: true }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        const startSection = document.getElementById('start-section');
+        const quizSection = document.getElementById('quiz-section');
+        const resultSection = document.getElementById('result-section');
+        const failSection = document.getElementById('fail-section');
+        const questionElement = document.getElementById('question');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const progressElement = document.getElementById('progress');
+
+        function startQuiz() {
+            startSection.style.display = 'none';
+            quizSection.style.display = 'block';
+            quizSection.classList.add('fade-in');
+            
+            userAnswers = []; // Reset jawaban
+            playMusic();
+            showQuestion();
+        }
+
+        function restartQuiz() {
+            failSection.style.display = 'none';
+            quizSection.style.display = 'block';
+            
+            // Trigger ulang animasi transisi
+            quizSection.classList.remove('fade-in');
+            void quizSection.offsetWidth;
+            quizSection.classList.add('fade-in');
+            
+            currentQuestionIndex = 0;
+            userAnswers = []; // Reset jawaban
+            showQuestion();
+        }
+
+        function playMusic() {
+            bgMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicBtn.innerText = "🎵";
+            }).catch(error => {
+                console.log("Autoplay dicegah atau link musik tidak valid:", error);
+            });
+        }
+
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicBtn.innerText = "🔇";
+            } else {
+                bgMusic.play();
+                isMusicPlaying = true;
+                musicBtn.innerText = "🎵";
+            }
+        }
+
+        function showQuestion() {
+            resetState();
+            let currentQuestion = questions[currentQuestionIndex];
+            
+            progressElement.innerText = `Pertanyaan ${currentQuestionIndex + 1} dari ${questions.length}`;
+            questionElement.innerText = currentQuestion.question;
+
+            currentQuestion.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.classList.add('btn');
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct;
+                }
+
+                if (answer.isSneaky) {
+                    button.addEventListener('mouseover', moveButton);
+                    button.addEventListener('touchstart', moveButton);
+                } else {
+                    button.addEventListener('click', selectAnswer);
+                }
+
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function moveButton(e) {
+            const btn = e.target;
+            btn.style.position = 'fixed';
+            const x = Math.random() * (window.innerWidth - btn.offsetWidth - 40);
+            const y = Math.random() * (window.innerHeight - btn.offsetHeight - 40);
+            btn.style.left = `${Math.max(20, x)}px`;
+            btn.style.top = `${Math.max(20, y)}px`;
+        }
+
+        function resetState() {
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.currentTarget;
+            const isCorrect = selectedButton.dataset.correct === "true";
+
+            // Matikan tombol sementara agar tidak dapat diklik berkali-kali
+            const allButtons = answerButtonsElement.querySelectorAll('.btn');
+            allButtons.forEach(btn => btn.style.pointerEvents = 'none');
+
+            // Jalankan animasi Benar atau Salah
+            if (isCorrect) {
+                selectedButton.classList.add('btn-correct');
+                selectedButton.innerText += "  ✅";
+                
+                // Letupan confetti mini khusus untuk jawaban benar
+                confetti({
+                    particleCount: 25,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            } else {
+                selectedButton.classList.add('btn-wrong');
+                selectedButton.innerText += "  ❌";
+            }
+
+            // Simpan riwayat jawaban
+            userAnswers.push(isCorrect);
+
+            // Jeda 900ms agar efek animasi terlihat jelas sebelum lanjut ke soal berikutnya
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    // Reset & re-trigger animasi transisi smooth
+                    quizSection.classList.remove('fade-in');
+                    void quizSection.offsetWidth; 
+                    quizSection.classList.add('fade-in');
+                    
+                    showQuestion();
+                } else {
+                    showResult();
+                }
+            }, 900);
+        }
+
+        function showResult() {
+            quizSection.style.display = 'none';
+
+            // Cek apakah semua jawaban bernilai true (benar)
+            const isAllCorrect = userAnswers.every(answer => answer === true);
+
+            if (isAllCorrect) {
+                // Tampilan MENANG
+                resultSection.style.display = 'block';
+                resultSection.classList.add('fade-in');
+                
+                // Confetti besar saat menang
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+
+                const pesanWA = encodeURIComponent("Aku udah selesai jawab semua kuisnyaaa dengan benar! Mana janji traktir makan Star Pizzanya?");
+                document.getElementById('wa-link').href = `https://wa.me/${nomorWA}?text=${pesanWA}`;
+            } else {
+                // Tampilan GAGAL
+                failSection.style.display = 'block';
+                failSection.classList.add('fade-in');
+            }
+        }
+    </script>
+</body>
+</html>
